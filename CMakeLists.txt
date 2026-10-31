@@ -38,6 +38,14 @@ else()
     target_compile_options(ladoga PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
+# Все бинарники — в build/bin, чтобы путь запуска не зависел от папки исходника.
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+
+# MinGW обычно линкуется с libstdc++-6.dll динамически, и запуск из проводника
+# падает с 0xc0000135. Варианты: не отвязываться от CLion, задать
+# -DCMAKE_CXX_FLAGS="-static-libstdc++ -static-libgcc" или включить копирование
+# DLL рядом с exe. Решение фиксируется отдельным шагом, см. docs/PLAN.md (1.0).
+
 if(LADOGA_BUILD_EXAMPLES)
     add_subdirectory(examples)
 endif()

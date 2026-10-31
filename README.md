@@ -33,8 +33,12 @@ SDL3, OpenGL, pugixml и виджеты появятся на следующих
 
 1. Открыть папку `LadogaUI`.
 2. `File → Reload CMake Project` (или согласиться на перезагрузку).
-3. Выбрать цель `ladoga_00_smoke` и нажать Run.
+3. В списке конфигураций запуска выбрать **LadogaUI** (или `ladoga_00_smoke` —
+   это цель CMake и её путь на диске `bin/ladoga_00_smoke.exe`) и нажать Run.
 4. Для тестов: в терминале CLion выполнить `ctest --test-dir cmake-build-debug --output-on-failure`.
+
+Все примеры и тесты собираются в `<build>/bin`: `cmake-build-debug/bin/ladoga_00_smoke.exe`,
+`cmake-build-debug/bin/ladoga_smoke_test.exe`.
 
 ### В терминале Windows
 
@@ -44,7 +48,7 @@ SDL3, OpenGL, pugixml и виджеты появятся на следующих
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
 cmake --build build
 ctest --test-dir build --output-on-failure
-.\build\examples\ladoga_00_smoke.exe
+.\build\bin\ladoga_00_smoke.exe
 ```
 
 На этой машине компилятора в `PATH` нет, поэтому можно временно добавить
@@ -56,7 +60,7 @@ $env:PATH = "$clion\bin\cmake\win\x64\bin;$clion\bin\ninja\win\x64;$clion\bin\mi
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
 cmake --build build
 ctest --test-dir build --output-on-failure
-.\build\examples\ladoga_00_smoke.exe
+.\build\bin\ladoga_00_smoke.exe
 ```
 
 ### В терминале Linux / macOS
@@ -65,7 +69,7 @@ ctest --test-dir build --output-on-failure
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
 cmake --build build
 ctest --test-dir build --output-on-failure
-./build/examples/ladoga_00_smoke
+./build/bin/ladoga_00_smoke
 ```
 
 ## Структура

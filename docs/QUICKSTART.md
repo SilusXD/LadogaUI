@@ -40,8 +40,14 @@ $env:PATH = "$clion\bin\cmake\win\x64\bin;$clion\bin\ninja\win\x64;$clion\bin\mi
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
 cmake --build build
 ctest --test-dir build --output-on-failure
-.\build\examples\ladoga_00_smoke.exe
+.\build\bin\ladoga_00_smoke.exe
 ```
+
+Если запуск из терминала падает с кодом `-1073741515` (в шестнадцатеричном виде
+`0xC0000135`), это «DLL не найдена»: в `PATH` нет
+`C:\Programming\Apps\JetBrains\CLion 2026.2.4.1\bin\mingw\bin` с `libstdc++-6.dll`.
+Из CLion Run такой проблемы нет. Постоянное решение — отдельный шаг (см.
+[план](PLAN.md), шаг 1.0).
 
 Ожидаемо:
 
@@ -59,7 +65,7 @@ LadogaUI 0.1.0
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
 cmake --build build
 ctest --test-dir build --output-on-failure
-./build/examples/ladoga_00_smoke
+./build/bin/ladoga_00_smoke
 ```
 
 Если Ninja не установлен, убрать `-G Ninja`: CMake выберет доступный генератор.

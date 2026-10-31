@@ -50,6 +50,15 @@
 Цель: окно 800×600, цветной прямоугольник, закрытие по крестику.
 Пока без виджетов и XML.
 
+- [ ] **1.0. Где найти бинарники и как запускать на Windows.**
+  Все примеры и тесты собираются в `<build>/bin`
+  (`cmake-build-debug/bin/ladoga_00_smoke.exe`). Выбрать одно решение для запуска
+  из проводника: (а) остаться в CLion; (б) добавить
+  `-DCMAKE_CXX_FLAGS="-static-libstdc++ -static-libgcc"`; (в) копировать
+  `libstdc++-6.dll` и `libgcc_s_seh-1.dll` рядом с exe через CMake.
+  Проверка: двойной клик по `ladoga_00_smoke.exe` даёт вывод без ошибки
+  `0xC0000135`, решение записано в `docs/QUICKSTART.md`.
+
 - [ ] **1.1. Решить, откуда берём SDL3.**
   Добавить `cmake/Dependencies.cmake`: `FetchContent` с закреплённым стабильным
   тегом SDL3; опция `LADOGA_USE_SYSTEM_SDL3` для Linux-пакетов.

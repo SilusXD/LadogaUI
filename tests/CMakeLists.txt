@@ -1,3 +1,5 @@
+# Бинарники тестов едут в <build>/bin (задано в корневом CMakeLists.txt).
+
 add_executable(ladoga_smoke_test smoke_test.cpp)
 target_link_libraries(ladoga_smoke_test PRIVATE Ladoga::ladoga)
 
