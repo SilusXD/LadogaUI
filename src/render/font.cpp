@@ -112,6 +112,32 @@ Font::~Font() = default;
 
 bool Font::valid() const noexcept { return impl_->valid; }
 
+int Font::text_width(std::string_view text, int pixel_height) const {
+    if (!impl_->valid || text.empty() || pixel_height <= 0) {
+        return 0;
+    }
+    const auto codepoints = decode_utf8(text);
+    if (codepoints.empty()) {
+        return 0;
+    }
+
+    const float scale = stbtt_ScaleForPixelHeight(&impl_->info, static_cast<float>(pixel_height));
+    double width = 0.0;
+    for (std::size_t i = 0; i < codepoints.size(); ++i) {
+        int advance = 0;
+        int left_bearing = 0;
+        stbtt_GetCodepointHMetrics(&impl_->info, codepoints[i], &advance, &left_bearing);
+        width += static_cast<double>(advance) * scale;
+        if (i + 1 < codepoints.size()) {
+            width += static_cast<double>(
+                         stbtt_GetCodepointKernAdvance(&impl_->info, codepoints[i],
+                                                       codepoints[i + 1])) *
+                     scale;
+        }
+    }
+    return static_cast<int>(std::ceil(width));
+}
+
 Font::Bitmap Font::render(std::string_view text, int pixel_height, Color color) const {
     Bitmap bitmap;
     if (!impl_->valid || text.empty() || pixel_height <= 0) {

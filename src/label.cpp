@@ -24,7 +24,8 @@ Size Label::preferred_size() const {
 }
 
 void Label::paint_self(Renderer& renderer) {
-    renderer.draw_text(bounds(), text_, Color{235, 238, 245, 255});
+    renderer.draw_text({bounds().x + 4, bounds().y, bounds().width - 4, bounds().height}, text_,
+                       Color{235, 238, 245, 255});
 }
 
 } // namespace ladoga

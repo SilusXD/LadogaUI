@@ -74,7 +74,7 @@ void TextBox::paint_self(Renderer& renderer) {
     renderer.draw_text({bounds().x + 6, bounds().y, bounds().width - 12, bounds().height}, text_,
                        Color{24, 28, 36, 255});
     if (focused_) {
-        const int cursor_x = bounds().x + 6 + approximate_text_width(text_);
+        const int cursor_x = bounds().x + 6 + renderer.text_width(text_);
         renderer.draw_rect({cursor_x, bounds().y + 6, 2, bounds().height - 12},
                            Color{30, 70, 140, 255});
     }

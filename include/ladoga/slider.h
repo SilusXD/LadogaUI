@@ -28,6 +28,7 @@ protected:
 
 private:
     void update_from_position(int x);
+    [[nodiscard]] int track_width() const;
 
     int value_ = 0;
     int min_ = 0;

@@ -17,6 +17,7 @@ public:
     void begin_frame(Color clear_color) override;
     void draw_rect(const Rect& rect, Color color) override;
     void draw_text(const Rect& rect, std::string_view text, Color color) override;
+    int text_width(std::string_view text) const override;
     void end_frame() override;
 
 private:

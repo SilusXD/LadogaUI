@@ -215,6 +215,7 @@ public:
     virtual void begin_frame(Color clear_color) = 0;
     virtual void draw_rect(const Rect& rect, Color color) = 0;
     virtual void draw_text(const Rect& rect, std::string_view text, Color color) = 0;
+    virtual int text_width(std::string_view text) const = 0;
     virtual void end_frame() = 0;
 };
 ```

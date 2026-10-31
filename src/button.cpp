@@ -46,7 +46,7 @@ void Button::paint_self(Renderer& renderer) {
     const Color color = pressed_ ? Color{50, 105, 180, 255} : Color{74, 144, 226, 255};
     renderer.draw_rect(bounds(), color);
 
-    const int text_width = approximate_text_width(text_);
+    const int text_width = renderer.text_width(text_);
     const int x = bounds().x + std::max(4, (bounds().width - text_width) / 2);
     renderer.draw_text({x, bounds().y, bounds().width - (x - bounds().x), bounds().height}, text_,
                        Color::white());

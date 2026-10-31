@@ -70,7 +70,7 @@ void OpenGLRenderer::draw_text(const Rect& rect, std::string_view text, Color co
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, bitmap.width, bitmap.height, 0, GL_RGBA,
                  GL_UNSIGNED_BYTE, bitmap.pixels.data());
 
-    const int x = rect.x + 4;
+    const int x = rect.x;
     const int y = rect.y + (rect.height - bitmap.height) / 2;
     const float x2 = static_cast<float>(x + bitmap.width);
     const float y2 = static_cast<float>(y + bitmap.height);
@@ -96,5 +96,9 @@ void OpenGLRenderer::draw_text(const Rect& rect, std::string_view text, Color co
 }
 
 void OpenGLRenderer::end_frame() {}
+
+int OpenGLRenderer::text_width(std::string_view text) const {
+    return font_.text_width(text, text_pixel_height);
+}
 
 } // namespace ladoga

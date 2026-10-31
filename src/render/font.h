@@ -25,6 +25,7 @@ public:
     Font& operator=(const Font&) = delete;
 
     [[nodiscard]] bool valid() const noexcept;
+    [[nodiscard]] int text_width(std::string_view text, int pixel_height) const;
     [[nodiscard]] Bitmap render(std::string_view text, int pixel_height, Color color) const;
 
 private:
