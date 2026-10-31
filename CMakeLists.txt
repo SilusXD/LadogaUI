@@ -40,10 +40,20 @@ endif()
 # Публичные заголовки лежат в include/ladoga, реализация — в src.
 add_library(ladoga STATIC
     src/version.cpp
+    src/widget.cpp
+    src/stack_panel.cpp
+    src/label.cpp
+    src/button.cpp
+    src/text_box.cpp
+    src/check_box.cpp
+    src/slider.cpp
     src/window.cpp
     src/app/application.cpp
     src/render/sdl3_backend.cpp
     src/render/opengl_renderer.cpp
+    src/xml/widget_factory.cpp
+    src/xml/property_map.cpp
+    src/xml/xml_loader.cpp
 )
 
 add_library(Ladoga::ladoga ALIAS ladoga)
@@ -58,7 +68,7 @@ target_include_directories(ladoga
 
 target_compile_features(ladoga PUBLIC cxx_std_20)
 target_compile_definitions(ladoga PRIVATE LADOGA_VERSION_STRING="${PROJECT_VERSION}")
-target_link_libraries(ladoga PRIVATE SDL3::SDL3 OpenGL::GL)
+target_link_libraries(ladoga PRIVATE SDL3::SDL3 OpenGL::GL pugixml::pugixml)
 
 if(MSVC)
     target_compile_options(ladoga PRIVATE /W4 /permissive-)

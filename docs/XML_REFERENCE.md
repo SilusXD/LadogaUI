@@ -1,8 +1,9 @@
 # Справочник по XML-разметке
 
-Статус: **контракт этапа 0**. Парсер появится на этапе 3; до этого документ
-фиксирует, что именно он должен принимать. Любое изменение синтаксиса — это
-изменение контракта.
+Статус: **реализовано на этапе 3.** Поддерживаются теги `Window`, `StackPanel`,
+`Label`, `Button`, `TextBox`, `CheckBox`, `Slider` и атрибуты из таблиц ниже.
+Текст пока не рисуется на экране (этап 5), но `Text` уже попадает в свойства.
+Любое изменение синтаксиса — это изменение контракта.
 
 ## 1. Минимальный пример
 
@@ -189,18 +190,22 @@ window.register_action("onOk", [this] { onOk(); });
 
 Эти возможности не «забыты»: они вынесены в отдельные шаги плана.
 
-## 7. Пример для этапа 3 (ожидаемый результат)
+## 7. Пример, который уже работает
 
-Файл `examples/01_hello/main.xml`:
+Файл `examples/03_xml/main.xml`:
 
 ```xml
-<Window Name="MainWindow" Title="Hello" Width="400" Height="300">
-    <StackPanel Orientation="Vertical" Margin="16">
-        <Label Text="Привет, мир!" />
-        <Button Text="OK" Click="onOk" />
+<Window Name="MainWindow" Title="LadogaUI - XML" Width="520" Height="420">
+    <StackPanel Orientation="Vertical" Margin="24">
+        <Label Name="greeting" Text="Введите имя:" />
+        <TextBox Name="nameBox" Text="" />
+        <Button Name="okButton" Text="OK" Click="onOk" />
+        <CheckBox Name="agree" Text="Согласен" Checked="true" />
+        <Slider Name="volume" Min="0" Max="100" Value="50" />
     </StackPanel>
 </Window>
 ```
 
-После этапа 3 окно должно открыться с текстом и кнопкой. После этапа 4 клик по
-кнопке вызовет `onOk`. После этапа 5 появится полноценная форма с вводом имени.
+Окно открывается, свойства попадают в виджеты. На экране пока цветные
+заглушки без текста. На этапе 4 клик по кнопке вызовет `onOk`, на этапе 5
+появится текст и полноценная форма.

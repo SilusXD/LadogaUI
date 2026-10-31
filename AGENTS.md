@@ -13,13 +13,14 @@
 
 ## Текущее состояние
 
-- Этап 1 закрыт: SDL3 3.4.18 + OpenGL, окно 800×600, цикл событий, закрытие.
-- Публичные классы: `Application`, `Window`, `Renderer`; внутренние:
-  `WindowBackend`, `SDL3Backend`, `OpenGLRenderer`.
-- `Window` пока не наследует `Widget` — это этап 2.
-- XML, виджеты, события и pugixml ещё не подключены.
-- Примеры: `ladoga_00_smoke`, `ladoga_01_window`; тест `ladoga.smoke`.
-- Следующий этап по плану — `Widget`, `StackPanel`, `layout()`.
+- Этапы 1–3 закрыты: SDL3 + OpenGL, дерево `Widget`, `StackPanel`, XML-загрузка.
+- Публичные классы: `Application`, `Window`, `Widget`, `StackPanel`, `Label`,
+  `Button`, `TextBox`, `CheckBox`, `Slider`, `Renderer`.
+- XML: pugixml 1.16, `WidgetFactory`, `PropertyMap`, `XmlLoader`; `Click`
+  сохраняется в `Button::clicked`.
+- Текст пока не рисуется (этап 5), клики мышью ещё не работают (этап 4).
+- Примеры: `01_window`, `02_layout`, `03_xml`; тесты `smoke`, `layout`, `xml`.
+- Следующий этап по плану — hit-test, события и клик.
 
 ## Обязательные правила
 
@@ -76,8 +77,6 @@ ctest --test-dir build --output-on-failure
 
 ## Чего пока нет и что не трогать без отдельного шага
 
-- pugixml и XML-загрузка;
-- `Widget`, `StackPanel` и остальные виджеты;
-- события, hit-test, `Click`;
-- шрифты и ввод текста;
+- события, hit-test, `Click` по мыши;
+- текст, шрифты и ввод с клавиатуры;
 - темы, плагины, установка/упаковка.

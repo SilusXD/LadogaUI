@@ -25,3 +25,19 @@ else()
 endif()
 
 find_package(OpenGL REQUIRED)
+
+# XML-парсер: pugixml 1.16 (MIT).
+option(LADOGA_USE_SYSTEM_PUGIXML "Использовать системный pugixml вместо FetchContent" OFF)
+
+if(LADOGA_USE_SYSTEM_PUGIXML)
+    find_package(pugixml CONFIG REQUIRED)
+else()
+    set(PUGIXML_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+
+    FetchContent_Declare(pugixml
+        GIT_REPOSITORY https://github.com/zeux/pugixml.git
+        GIT_TAG v1.16
+        GIT_SHALLOW TRUE
+    )
+    FetchContent_MakeAvailable(pugixml)
+endif()

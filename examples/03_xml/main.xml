@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Window Name="MainWindow" Title="LadogaUI - XML" Width="520" Height="420">
+    <StackPanel Orientation="Vertical" Margin="24">
+        <Label Name="greeting" Text="Введите имя:" />
+        <TextBox Name="nameBox" Text="" />
+        <Button Name="okButton" Text="OK" Click="onOk" />
+        <CheckBox Name="agree" Text="Согласен" Checked="true" />
+        <Slider Name="volume" Min="0" Max="100" Value="50" />
+    </StackPanel>
+</Window>

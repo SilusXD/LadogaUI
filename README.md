@@ -9,15 +9,20 @@
 
 ## Статус
 
-**Этап 1 — окно и прямоугольник.** Работает:
+**Этапы 2–3 — дерево виджетов, раскладка и XML.** Работает:
 
-- окно SDL3 800×600 с контекстом OpenGL;
-- цикл событий и закрытие по крестику;
-- абстракции `WindowBackend`, `Renderer` и `Window`;
-- пример `ladoga_01_window`: тёмный фон и синий прямоугольник 400×300;
-- smoke-пример и тест.
+- `Widget`, дерево детей, `Name`, `Width`/`Height`, `Margin`, `Visible`;
+- `StackPanel` с `Orientation="Vertical"` и `Orientation="Horizontal"`;
+- виджеты `Label`, `Button`, `TextBox`, `CheckBox`, `Slider` — пока в виде
+  цветных заглушек, без текста;
+- XML-загрузка через pugixml 1.16: фабрика по тегу, карта свойств, ошибки с
+  файлом/строкой/колонкой;
+- `Window::load_from_xml`, `Click="onOk"` и реестр действий;
+- примеры `01_window`, `02_layout`, `03_xml`;
+- тесты `smoke`, `layout`, `xml`.
 
-XML, виджеты и клики появятся на этапах 2–4. `pugixml` ещё не подключён.
+Текст, ввод и клики мышью — этапы 4–5. Сейчас `Click` только сохраняет действие;
+hit-test и вызов по клику появятся на этапе 4.
 
 ## Требования
 
@@ -25,10 +30,10 @@ XML, виджеты и клики появятся на этапах 2–4. `pug
 - CMake 3.24+;
 - компилятор: MSVC 2022+, GCC 12+, Clang 15+;
 - OpenGL-драйвер;
-- интернет при первой сборке: CMake скачивает SDL3 3.4.18.
+- интернет при первой сборке: CMake скачивает SDL3 3.4.18 и pugixml 1.16.
 
-Если SDL3 уже установлен в системе, можно собирать с
-`-DLADOGA_USE_SYSTEM_SDL3=ON`.
+Если SDL3 или pugixml уже установлены в системе, можно собирать с
+`-DLADOGA_USE_SYSTEM_SDL3=ON` и `-DLADOGA_USE_SYSTEM_PUGIXML=ON`.
 
 ## Сборка
 
@@ -36,14 +41,18 @@ XML, виджеты и клики появятся на этапах 2–4. `pug
 
 1. Открыть папку `LadogaUI`.
 2. `File → Reload CMake Project` (или согласиться на перезагрузку).
-3. В списке конфигураций запуска выбрать **ladoga_01_window** и нажать Run.
+3. В списке конфигураций запуска выбрать **ladoga_03_xml** и нажать Run.
 4. Для тестов: в терминале CLion выполнить `ctest --test-dir cmake-build-debug --output-on-failure`.
 
-Первая настройка CMake скачивает и собирает SDL3 — это занимает несколько минут.
+Первая настройка CMake скачивает и собирает SDL3 и pugixml — это занимает несколько минут.
 Все примеры и тесты собираются в `<build>/bin`:
+`cmake-build-debug/bin/ladoga_03_xml.exe`,
+`cmake-build-debug/bin/ladoga_02_layout.exe`,
 `cmake-build-debug/bin/ladoga_01_window.exe`,
 `cmake-build-debug/bin/ladoga_00_smoke.exe`,
-`cmake-build-debug/bin/ladoga_smoke_test.exe`.
+`cmake-build-debug/bin/ladoga_smoke_test.exe`,
+`cmake-build-debug/bin/ladoga_layout_test.exe`,
+`cmake-build-debug/bin/ladoga_xml_test.exe`.
 
 ### В терминале Windows
 
@@ -53,11 +62,12 @@ XML, виджеты и клики появятся на этапах 2–4. `pug
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
 cmake --build build
 ctest --test-dir build --output-on-failure
-.\build\bin\ladoga_01_window.exe
+.\build\bin\ladoga_03_xml.exe
 ```
 
-Ожидаемо: окно 800×600 с заголовком `LadogaUI - Stage 1`, тёмный фон и синий
-прямоугольник по центру. Окно закрывается крестиком, процесс завершается с кодом 0.
+Ожидаемо: окно 520×420 с заголовком `LadogaUI - XML`, внутри — цветные
+заглушки Label, TextBox, Button, CheckBox и Slider. Текст ещё не рисуется.
+Окно закрывается крестиком, процесс завершается с кодом 0.
 
 На этой машине компилятора в `PATH` нет, поэтому можно временно добавить
 инструменты, встроенные в CLion:
@@ -68,7 +78,7 @@ $env:PATH = "$clion\bin\cmake\win\x64\bin;$clion\bin\ninja\win\x64;$clion\bin\mi
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
 cmake --build build
 ctest --test-dir build --output-on-failure
-.\build\bin\ladoga_01_window.exe
+.\build\bin\ladoga_03_xml.exe
 ```
 
 ### В терминале Linux / macOS
@@ -77,7 +87,7 @@ ctest --test-dir build --output-on-failure
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
 cmake --build build
 ctest --test-dir build --output-on-failure
-./build/bin/ladoga_01_window
+./build/bin/ladoga_03_xml
 ```
 
 ## Структура
@@ -87,19 +97,23 @@ LadogaUI/
 ├── CMakeLists.txt          сборка ядра, примеров и тестов
 ├── PROJECT_BRIEF.md        исходный бриф проекта — источник истины
 ├── AGENTS.md               правила для ИИ-агента и точка входа в проект
-├── cmake/Dependencies.cmake SDL3 и OpenGL
+├── cmake/Dependencies.cmake SDL3, OpenGL, pugixml
 ├── include/ladoga/         публичный API (то, что видит студент)
 │   ├── ladoga.h            единый заголовок
 │   ├── application.h       точка входа
-│   ├── window.h            окно: заголовок, размер, paint()
+│   ├── widget.h            база дерева
+│   ├── window.h            окно и load_from_xml
+│   ├── stack_panel.h       вертикальная/горизонтальная панель
+│   ├── label.h, button.h, text_box.h, check_box.h, slider.h
 │   ├── renderer.h          абстракция рисования
-│   └── core/               базовые типы: геометрия, цвет
+│   └── core/               геометрия, цвет, отступы
 ├── src/
 │   ├── app/                Application и цикл событий
 │   ├── render/             SDL3Backend, OpenGLRenderer, WindowBackend
-│   └── window.cpp
-├── examples/               примеры; 01_window — окно с прямоугольником
-├── tests/                  smoke-тесты и будущие тесты поведения
+│   ├── xml/                XmlLoader, WidgetFactory, PropertyMap
+│   └── widget.cpp, stack_panel.cpp, window.cpp, виджеты
+├── examples/               01_window, 02_layout, 03_xml
+├── tests/                  smoke, layout, xml
 └── docs/
     ├── API_CONTRACT.md     зафиксированные имена классов, свойств и событий
     ├── XML_REFERENCE.md    синтаксис разметки

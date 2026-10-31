@@ -13,11 +13,17 @@ Application::Application(int, char**) {}
 Application::~Application() = default;
 
 int Application::run(Window& window) {
-    SDL3Backend backend(window.title(), window.width(), window.height());
+    const int native_width = window.width() == Widget::Auto ? 800 : window.width();
+    const int native_height = window.height() == Widget::Auto ? 600 : window.height();
+    SDL3Backend backend(window.title(), native_width, native_height);
     OpenGLRenderer renderer;
 
     while (backend.poll_events()) {
-        renderer.set_viewport(backend.drawable_size());
+        const Size size = backend.drawable_size();
+        window.set_bounds({0, 0, size.width, size.height});
+        window.layout();
+
+        renderer.set_viewport(size);
         renderer.begin_frame(Color{16, 20, 28, 255});
         window.paint(renderer);
         renderer.end_frame();

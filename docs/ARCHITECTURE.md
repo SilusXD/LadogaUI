@@ -4,16 +4,19 @@
 контракт — в [API_CONTRACT.md](API_CONTRACT.md). Если внутреннее устройство
 можно упростить, не ломая контракт, — упрощаем.
 
-## 0. Что реализовано на этапе 1
+## 0. Что реализовано на этапах 2–3
 
-- `Application::run(Window&)` создаёт `SDL3Backend` и `OpenGLRenderer`, крутит
-  цикл событий и вызывает `Window::paint(Renderer&)`.
-- `Window` пока **не** наследует `Widget`: это отдельный класс с заголовком,
-  размером и виртуальным `paint`. Наследование появится на этапе 2.
-- `WindowBackend` уже абстракция: ядро не вызывает SDL напрямую. Но `Application`
-  пока сам выбирает `SDL3Backend` — внедрение бэкенда появится позже.
-- `OpenGLRenderer` рисует fixed-function OpenGL. Это временно (см. TODO в коде).
-- XML, `Widget`, `StackPanel`, `Event` и hit-test ещё не реализованы.
+- `Widget` — дерево детей, `Name`, `Width`/`Height`/`Auto`, `Margin`, `Visible`,
+  `preferred_size()`, `layout()`, `paint()`.
+- `Window` наследует `Widget` и является корнем дерева.
+- `StackPanel` раскладывает детей вертикально и горизонтально.
+- `Label`, `Button`, `TextBox`, `CheckBox`, `Slider` хранят свойства; вместо
+  текста пока рисуются цветные заглушки (TODO этапа 5).
+- `XmlLoader` + `WidgetFactory` + `PropertyMap` создают дерево из XML.
+- `Window::load_from_xml`, `register_action`, `invoke_action`; `Click` создаёт
+  `Button::clicked`, но событий мыши ещё нет.
+- `OpenGLRenderer` по-прежнему fixed-function; текст — этап 5.
+- `Event`, hit-test и `on_event` — этап 4.
 
 ## 1. Слои
 
@@ -40,15 +43,18 @@
 include/ladoga/          публичные заголовки
 ├── ladoga.h             единый заголовок
 ├── application.h
+├── widget.h
 ├── window.h
-├── renderer.h           абстракция рисования (нужна Window::paint)
-└── core/                геометрия, цвет, margin, события (этапы 2–4)
+├── stack_panel.h
+├── label.h, button.h, text_box.h, check_box.h, slider.h
+├── renderer.h           абстракция рисования (нужна Widget::paint)
+└── core/                геометрия, цвет, margin, события (этап 4)
 
 src/
-├── window.cpp
-├── core/                Widget, layout, маршрутизация событий (этапы 2–4)
+├── widget.cpp, stack_panel.cpp, window.cpp, виджеты
+├── core/                layout, маршрутизация событий (этап 4)
 ├── render/              WindowBackend, SDL3Backend, OpenGLRenderer
-├── xml/                 XmlLoader, WidgetFactory, PropertyMap (этап 3)
+├── xml/                 XmlLoader, WidgetFactory, PropertyMap
 └── app/                 Application, цикл событий
 
 examples/                по одному примеру на тему/виджет
@@ -60,8 +66,7 @@ third_party/             только если зависимость нельз
 ## 3. Владение
 
 - `Application` владеет бэкендом и рендерером на время `run`.
-- На этапе 1 `Window` не владеет детьми: дерева ещё нет. С этапа 2 `Window`
-  станет корнем дерева и будет владеть детьми через
+- `Window` — корень дерева и владеет детьми через
   `std::vector<std::unique_ptr<Widget>>`.
 - `Widget` хранит невладеющий `Widget* parent`.
 - Событийные поля (`clicked` и т. п.) принадлежат виджету.
@@ -75,23 +80,30 @@ third_party/             только если зависимость нельз
 
 ## 4. Жизненный цикл кадра
 
-На этапе 1 цикл короткий:
+Сейчас (этапы 2–3) цикл такой:
 
 ```text
 poll SDL events (закрытие окна)
+      ↓
+window.set_bounds({0, 0, drawable_size})
+      ↓
+window.layout()
       ↓
 Renderer::set_viewport(drawable_size)
       ↓
 Renderer::begin_frame(clear_color)
       ↓
-Window::paint(Renderer&)
+window.paint(Renderer&)
       ↓
 Renderer::end_frame()
       ↓
 SDL_GL_SwapWindow
 ```
 
-С этапа 2–4 сюда добавятся layout, hit-test и маршрутизация событий:
+layout пересчитывается каждый кадр — это просто и достаточно для двух
+вложенных панелей. Флаг `layout_dirty` появится позже, если понадобится.
+
+С этапа 4 сюда добавятся hit-test и маршрутизация событий:
 
 ```text
 poll SDL events
@@ -100,16 +112,14 @@ poll SDL events
       ↓
 hit-test + on_event() по дереву
       ↓
-если layout_dirty: layout()
+layout()
       ↓
 paint(root, Renderer&)
       ↓
-Renderer::present()
+present()
 ```
 
 - Retained-mode: дерево хранит состояние между кадрами.
-- `layout()` пересчитывается только когда меняются размеры/свойства/дерево
-  (флаг `layout_dirty`).
 - `paint()` не меняет состояние, кроме кэшей.
 - Один поток. Никаких мьютексов и очередей между потоками.
 
@@ -195,12 +205,12 @@ public:
 };
 ```
 
-- На этапе 1 `OpenGLRenderer` использует fixed-function OpenGL: `glOrtho`,
+- Сейчас `OpenGLRenderer` использует fixed-function OpenGL: `glOrtho`,
   `glBegin(GL_QUADS)`. Это осознанное упрощение; шейдеры и батчинг — этап 5.
 - `Renderer` скрывает OpenGL от `Window::paint`.
 - Текст на этапе 5: отдельный шаг выбора шрифтового бэкенда (stb_truetype +
   свободный шрифт или SDL3_ttf). До этого `draw_text` — заглушка.
-- `NullRenderer` для тестов layout/логики без окна — полезен на этапах 2–3.
+- `NullRenderer` для тестов layout/логики без окна пригодится позже.
 
 `WindowBackend` скрывает SDL3:
 
@@ -230,9 +240,9 @@ public:
 
 - никаких зависимостей «на будущее»;
 - версии закреплены;
-- первая сборка требует сети: SDL3 скачивается и собирается статически;
+- первая сборка требует сети: SDL3 и pugixml скачиваются и собираются статически;
 - лицензии совместимы с учебным и коммерческим использованием
-  (SDL3 — zlib, OpenGL — системный API).
+  (SDL3 — zlib, pugixml — MIT, OpenGL — системный API).
 
 ## 10. Расширяемость (этап 8)
 
@@ -250,8 +260,9 @@ public:
 ## 11. Тестирование
 
 - `tests/smoke_test.cpp` — базовая проверка сборки и типов;
-- этап 2: тесты layout без окна (`NullRenderer`);
-- этап 3: тесты парсера на строках XML, без файлов и GL;
+- `tests/layout_test.cpp` — вертикальная/горизонтальная раскладка, `Auto`,
+  `find_child`;
+- `tests/xml_test.cpp` — загрузка XML, свойства, `Click`, ошибка неизвестного тега;
 - этап 4: тесты hit-test и клика без реального окна;
 - этап 5: тесты свойств каждого виджета;
 - визуальные примеры — отдельно, они не заменяют тесты.
