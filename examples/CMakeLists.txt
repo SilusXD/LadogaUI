@@ -63,3 +63,18 @@ add_custom_command(TARGET ladoga_05_hello POST_BUILD
 if(COMMAND ladoga_copy_mingw_runtime)
     ladoga_copy_mingw_runtime(ladoga_05_hello)
 endif()
+
+add_executable(ladoga_06_sum 06_sum/main.cpp)
+ladoga_gui_app(ladoga_06_sum)
+target_link_libraries(ladoga_06_sum PRIVATE Ladoga::ladoga)
+target_compile_definitions(ladoga_06_sum PRIVATE
+    LADOGA_EXAMPLE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/06_sum"
+)
+add_custom_command(TARGET ladoga_06_sum POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${CMAKE_CURRENT_SOURCE_DIR}/06_sum/main.xml"
+        "$<TARGET_FILE_DIR:ladoga_06_sum>"
+)
+if(COMMAND ladoga_copy_mingw_runtime)
+    ladoga_copy_mingw_runtime(ladoga_06_sum)
+endif()

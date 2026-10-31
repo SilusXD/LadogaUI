@@ -18,8 +18,8 @@
 - Публичные классы: `Application`, `Window`, `Widget`, `StackPanel`, `Label`,
   `Button`, `TextBox`, `CheckBox`, `Slider`, `Renderer`.
 - Шрифт: stb_truetype + Roboto, файлы в `third_party/`.
-- Примеры: `01_window`, `02_layout`, `03_xml`, `04_events`, `05_hello` —
-  GUI-приложения без консоли; `00_smoke` и тесты — консольные.
+- Примеры: `01_window`, `02_layout`, `03_xml`, `04_events`, `05_hello`,
+  `06_sum` — GUI-приложения без консоли; `00_smoke` и тесты — консольные.
 - Тесты: `smoke`, `layout`, `xml`, `events`, `font`, `widgets` — 6 из 6.
 - Следующий этап по плану — Linux / РЕД ОС (этап 7).
 
@@ -74,6 +74,7 @@ ctest --test-dir build --output-on-failure
 - API: `docs/API_REFERENCE.md`.
 - XML: `docs/XML_REFERENCE.md`.
 - Примеры: `docs/EXAMPLES.md`.
+- Практикум: `docs/TUTORIAL_SUM.md`.
 - Виджеты: `docs/widgets/`.
 - Ошибки: `docs/TROUBLESHOOTING.md`.
 - Границы модулей: `docs/ARCHITECTURE.md`.

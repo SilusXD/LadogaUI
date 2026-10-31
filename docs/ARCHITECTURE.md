@@ -12,7 +12,7 @@
 - `TextBox` принимает UTF-8 ввод и Backspace, `CheckBox` переключается,
   `Slider` тянется мышью.
 - Текст рисуется через stb_truetype + Roboto в `OpenGLRenderer::draw_text`.
-- `03_xml`, `04_events`, `05_hello` — рабочие примеры с текстом и событиями.
+- `03_xml`, `04_events`, `05_hello`, `06_sum` — рабочие примеры с текстом и событиями.
 - `XmlLoader` по-прежнему создаёт дерево, `PropertyMap` применяет свойства.
 - `OpenGLRenderer` использует fixed-function OpenGL и отдельную текстуру на
   строку; шейдеры/батчинг оставлены на будущее.

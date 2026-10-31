@@ -18,7 +18,7 @@
 - клики, фокус TextBox, ввод UTF-8, Backspace, перетаскивание Slider;
 - `Click="onOk"` и реестр действий окна;
 - текст через stb_truetype + Roboto (кириллица);
-- пять примеров: окно, раскладка, XML, события, «Hello, World»;
+- шесть примеров: окно, раскладка, XML, события, «Hello, World», сумма;
 - шесть тестов: `smoke`, `layout`, `xml`, `events`, `font`, `widgets`.
 
 Не реализованы: `GridPanel`, темы, плагины, установка/упаковка, Linux/РЕД ОС.
@@ -57,6 +57,7 @@ ladoga_02_layout.exe
 ladoga_03_xml.exe
 ladoga_04_events.exe
 ladoga_05_hello.exe
+ladoga_06_sum.exe
 ladoga_smoke_test.exe
 ladoga_layout_test.exe
 ladoga_xml_test.exe
@@ -65,7 +66,7 @@ ladoga_font_test.exe
 ladoga_widgets_test.exe
 ```
 
-Примеры `01_window`–`05_hello` — GUI-приложения: при запуске из проводника
+Примеры `01_window`–`06_sum` — GUI-приложения: при запуске из проводника
 консоль не открывается. `00_smoke` и тесты остаются консольными. Если GUI-пример
 не может создать окно, ошибка показывается диалогом.
 
@@ -128,7 +129,7 @@ LadogaUI/
 │   ├── render/             SDL3Backend, OpenGLRenderer, Font
 │   ├── xml/                XmlLoader, WidgetFactory, PropertyMap
 │   └── widget.cpp, stack_panel.cpp, window.cpp, виджеты
-├── examples/               01_window … 05_hello
+├── examples/               01_window … 06_sum
 ├── tests/                  smoke, layout, xml, events, font, widgets
 └── docs/
     ├── API_CONTRACT.md     контракт имён, свойств и событий
@@ -138,7 +139,8 @@ LadogaUI/
     ├── ROADMAP.md          этапы 0–8
     ├── PLAN.md             план из маленьких шагов
     ├── QUICKSTART.md       быстрый старт за 30 минут
-    ├── EXAMPLES.md         описание пяти примеров
+    ├── TUTORIAL_SUM.md     практикум: подключение и форма «Сумма двух чисел»
+    ├── EXAMPLES.md         описание шести примеров
     ├── TROUBLESHOOTING.md  частые ошибки
     └── widgets/            Label, Button, TextBox, CheckBox, Slider
 ```
@@ -146,6 +148,7 @@ LadogaUI/
 ## Документация
 
 - [Быстрый старт за 30 минут](docs/QUICKSTART.md)
+- [Практикум: сумма двух чисел](docs/TUTORIAL_SUM.md)
 - [Справочник API](docs/API_REFERENCE.md)
 - [Справочник по XML](docs/XML_REFERENCE.md)
 - [Примеры](docs/EXAMPLES.md)
