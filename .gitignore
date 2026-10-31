@@ -1,0 +1,43 @@
+# Сборка
+/build/
+/cmake-build-*/
+/out/
+CMakeUserPresets.json
+compile_commands.json
+
+# Артефакты CMake/тестов
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+CTestTestfile.cmake
+Testing/
+*.ninja
+.ninja_deps
+.ninja_log
+
+# IDE
+.idea/
+.vs/
+.vscode/
+*.user
+*.suo
+*.sln
+*.vcxproj*
+
+# Скомпилированные файлы
+*.o
+*.obj
+*.a
+*.lib
+*.exe
+*.dll
+*.so
+*.dylib
+*.pdb
+*.ilk
+
+# ОС и логи
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log
