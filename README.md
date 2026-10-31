@@ -9,23 +9,26 @@
 
 ## Статус
 
-**Этап 0 — контракт и каркас.** Сейчас в репозитории есть:
+**Этап 1 — окно и прямоугольник.** Работает:
 
-- CMake-проект на C++20 без внешних зависимостей;
-- публичные заголовки `ladoga/version.h`, `ladoga/core/geometry.h`, `ladoga/core/color.h`;
-- smoke-пример и smoke-тест;
-- зафиксированный контракт API и XML;
-- дорожная карта и подробный план из маленьких шагов.
+- окно SDL3 800×600 с контекстом OpenGL;
+- цикл событий и закрытие по крестику;
+- абстракции `WindowBackend`, `Renderer` и `Window`;
+- пример `ladoga_01_window`: тёмный фон и синий прямоугольник 400×300;
+- smoke-пример и тест.
 
-SDL3, OpenGL, pugixml и виджеты появятся на следующих этапах. Пока `ladoga_00_smoke`
-ничего не рисует — он проверяет, что каркас собирается.
+XML, виджеты и клики появятся на этапах 2–4. `pugixml` ещё не подключён.
 
 ## Требования
 
 - C++20;
 - CMake 3.24+;
 - компилятор: MSVC 2022+, GCC 12+, Clang 15+;
-- для следующих этапов: SDL3, OpenGL, pugixml (подключаются через CMake, не вручную).
+- OpenGL-драйвер;
+- интернет при первой сборке: CMake скачивает SDL3 3.4.18.
+
+Если SDL3 уже установлен в системе, можно собирать с
+`-DLADOGA_USE_SYSTEM_SDL3=ON`.
 
 ## Сборка
 
@@ -33,11 +36,13 @@ SDL3, OpenGL, pugixml и виджеты появятся на следующих
 
 1. Открыть папку `LadogaUI`.
 2. `File → Reload CMake Project` (или согласиться на перезагрузку).
-3. В списке конфигураций запуска выбрать **LadogaUI** (или `ladoga_00_smoke` —
-   это цель CMake и её путь на диске `bin/ladoga_00_smoke.exe`) и нажать Run.
+3. В списке конфигураций запуска выбрать **ladoga_01_window** и нажать Run.
 4. Для тестов: в терминале CLion выполнить `ctest --test-dir cmake-build-debug --output-on-failure`.
 
-Все примеры и тесты собираются в `<build>/bin`: `cmake-build-debug/bin/ladoga_00_smoke.exe`,
+Первая настройка CMake скачивает и собирает SDL3 — это занимает несколько минут.
+Все примеры и тесты собираются в `<build>/bin`:
+`cmake-build-debug/bin/ladoga_01_window.exe`,
+`cmake-build-debug/bin/ladoga_00_smoke.exe`,
 `cmake-build-debug/bin/ladoga_smoke_test.exe`.
 
 ### В терминале Windows
@@ -48,8 +53,11 @@ SDL3, OpenGL, pugixml и виджеты появятся на следующих
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
 cmake --build build
 ctest --test-dir build --output-on-failure
-.\build\bin\ladoga_00_smoke.exe
+.\build\bin\ladoga_01_window.exe
 ```
+
+Ожидаемо: окно 800×600 с заголовком `LadogaUI - Stage 1`, тёмный фон и синий
+прямоугольник по центру. Окно закрывается крестиком, процесс завершается с кодом 0.
 
 На этой машине компилятора в `PATH` нет, поэтому можно временно добавить
 инструменты, встроенные в CLion:
@@ -60,7 +68,7 @@ $env:PATH = "$clion\bin\cmake\win\x64\bin;$clion\bin\ninja\win\x64;$clion\bin\mi
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
 cmake --build build
 ctest --test-dir build --output-on-failure
-.\build\bin\ladoga_00_smoke.exe
+.\build\bin\ladoga_01_window.exe
 ```
 
 ### В терминале Linux / macOS
@@ -69,7 +77,7 @@ ctest --test-dir build --output-on-failure
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
 cmake --build build
 ctest --test-dir build --output-on-failure
-./build/bin/ladoga_00_smoke
+./build/bin/ladoga_01_window
 ```
 
 ## Структура
@@ -79,11 +87,18 @@ LadogaUI/
 ├── CMakeLists.txt          сборка ядра, примеров и тестов
 ├── PROJECT_BRIEF.md        исходный бриф проекта — источник истины
 ├── AGENTS.md               правила для ИИ-агента и точка входа в проект
+├── cmake/Dependencies.cmake SDL3 и OpenGL
 ├── include/ladoga/         публичный API (то, что видит студент)
 │   ├── ladoga.h            единый заголовок
+│   ├── application.h       точка входа
+│   ├── window.h            окно: заголовок, размер, paint()
+│   ├── renderer.h          абстракция рисования
 │   └── core/               базовые типы: геометрия, цвет
-├── src/                    реализация ядра
-├── examples/               примеры; каждый новый виджет = новый пример
+├── src/
+│   ├── app/                Application и цикл событий
+│   ├── render/             SDL3Backend, OpenGLRenderer, WindowBackend
+│   └── window.cpp
+├── examples/               примеры; 01_window — окно с прямоугольником
 ├── tests/                  smoke-тесты и будущие тесты поведения
 └── docs/
     ├── API_CONTRACT.md     зафиксированные имена классов, свойств и событий

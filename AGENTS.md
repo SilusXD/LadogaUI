@@ -13,11 +13,13 @@
 
 ## Текущее состояние
 
-- Этап 0: каркас, контракт API, XML-справочник, план.
-- Собирается библиотека `ladoga` (пока только версия и базовые типы), пример
-  `ladoga_00_smoke`, тест `ladoga.smoke`.
-- Внешних зависимостей нет. SDL3, OpenGL и pugixml ещё не подключены.
-- Следующий этап по плану — окно SDL3 и цветной прямоугольник.
+- Этап 1 закрыт: SDL3 3.4.18 + OpenGL, окно 800×600, цикл событий, закрытие.
+- Публичные классы: `Application`, `Window`, `Renderer`; внутренние:
+  `WindowBackend`, `SDL3Backend`, `OpenGLRenderer`.
+- `Window` пока не наследует `Widget` — это этап 2.
+- XML, виджеты, события и pugixml ещё не подключены.
+- Примеры: `ladoga_00_smoke`, `ladoga_01_window`; тест `ladoga.smoke`.
+- Следующий этап по плану — `Widget`, `StackPanel`, `layout()`.
 
 ## Обязательные правила
 
@@ -74,7 +76,8 @@ ctest --test-dir build --output-on-failure
 
 ## Чего пока нет и что не трогать без отдельного шага
 
-- SDL3, OpenGL, pugixml;
-- `Widget`, `Window`, `StackPanel` и остальные виджеты;
+- pugixml и XML-загрузка;
+- `Widget`, `StackPanel` и остальные виджеты;
+- события, hit-test, `Click`;
 - шрифты и ввод текста;
 - темы, плагины, установка/упаковка.

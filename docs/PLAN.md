@@ -14,7 +14,7 @@
 5. Публичный API меняем только через `docs/API_CONTRACT.md`.
 6. Временное упрощение помечаем `// TODO: упрощение для этапа N`.
 
-Текущая точка: **шаг 0.4** (проверка каркаса пользователем), затем этап 1.
+Текущая точка: **этап 1 закрыт**, следующий — этап 2 (дерево виджетов и `StackPanel`).
 
 ---
 
@@ -50,60 +50,60 @@
 Цель: окно 800×600, цветной прямоугольник, закрытие по крестику.
 Пока без виджетов и XML.
 
-- [ ] **1.0. Где найти бинарники и как запускать на Windows.**
+- [x] **1.0. Где найти бинарники и как запускать на Windows.**
   Все примеры и тесты собираются в `<build>/bin`
-  (`cmake-build-debug/bin/ladoga_00_smoke.exe`). Выбрать одно решение для запуска
-  из проводника: (а) остаться в CLion; (б) добавить
-  `-DCMAKE_CXX_FLAGS="-static-libstdc++ -static-libgcc"`; (в) копировать
-  `libstdc++-6.dll` и `libgcc_s_seh-1.dll` рядом с exe через CMake.
-  Проверка: двойной клик по `ladoga_00_smoke.exe` даёт вывод без ошибки
-  `0xC0000135`, решение записано в `docs/QUICKSTART.md`.
+  (`cmake-build-debug/bin/ladoga_01_window.exe`). Минимальный C++ runtime
+  слинкован статически (`-static-libgcc -static-libstdc++`), `libwinpthread-1.dll`
+  копируется рядом с exe через CMake.
+  Проверка: двойной клик по `ladoga_01_window.exe` открывает окно без ошибки
+  `0xC0000135`; решение записано в `docs/QUICKSTART.md`.
 
-- [ ] **1.1. Решить, откуда берём SDL3.**
-  Добавить `cmake/Dependencies.cmake`: `FetchContent` с закреплённым стабильным
-  тегом SDL3; опция `LADOGA_USE_SYSTEM_SDL3` для Linux-пакетов.
-  Проверка: `cmake -S . -B build` находит/скачивает SDL3, конфигурация проходит.
-  Если сети нет — этот шаг сначала решается системным пакетом SDL3.
+- [x] **1.1. Решить, откуда берём SDL3.**
+  `cmake/Dependencies.cmake`: `FetchContent` с тегом `release-3.4.18`;
+  опция `LADOGA_USE_SYSTEM_SDL3` для Linux-пакетов.
+  Проверка: `cmake -S . -B build` скачивает и собирает SDL3; конфигурация проходит.
 
-- [ ] **1.2. Каркас `Application` без окна.**
-  Заголовок `include/ladoga/application.h`, пустая реализация `run()`.
-  Проверка: проект собирается, пример не меняется.
+- [x] **1.2. `Application`.**
+  `include/ladoga/application.h`, `src/app/application.cpp`: создаёт бэкенд и
+  рендерер, крутит цикл, вызывает `Window::paint`.
+  Проверка: проект собирается, `run()` возвращает 0 после закрытия окна.
 
-- [ ] **1.3. Интерфейс `WindowBackend`.**
-  `poll_event`, `drawable_size`, `swap_buffers`; пока без SDL.
-  Проверка: заголовок компилируется, ядро его не использует.
+- [x] **1.3. Интерфейс `WindowBackend`.**
+  `poll_events`, `drawable_size`, `present`; SDL3 скрыт в `src/render/`.
+  Проверка: заголовок компилируется, `Application` не включает SDL напрямую.
 
-- [ ] **1.4. `SDL3Backend`: создать окно.**
-  `SDL_Init`, `SDL_CreateWindow`, цикл `SDL_PollEvent` до `SDL_EVENT_QUIT`.
+- [x] **1.4. `SDL3Backend`: создать окно.**
+  `SDL_Init`, `SDL_CreateWindow`, `SDL_PollEvent` до `SDL_EVENT_QUIT`.
   Проверка: окно открывается и закрывается, процесс завершается с кодом 0.
 
-- [ ] **1.5. `SDL3Backend`: контекст OpenGL.**
+- [x] **1.5. `SDL3Backend`: контекст OpenGL.**
   `SDL_GL_CreateContext`, `SDL_GL_SwapWindow`, `SDL_GL_DestroyContext`.
-  Проверка: окно с цветом очистки (например, тёмно-синим) вместо мусора.
+  Проверка: окно с цветом очистки, без мусора.
 
-- [ ] **1.6. Интерфейс `Renderer`.**
-  `begin_frame`, `draw_rect`, `draw_text` (пока заглушка), `end_frame`.
-  Проверка: `NullRenderer` для тестов и `OpenGLRenderer` собираются.
+- [x] **1.6. Интерфейс `Renderer`.**
+  `set_viewport`, `begin_frame`, `draw_rect`, `draw_text` (пока заглушка),
+  `end_frame`; реализация `OpenGLRenderer`.
+  Проверка: проект собирается, `draw_text` ничего не рисует.
 
-- [ ] **1.7. `OpenGLRenderer`: очистка и прямоугольник.**
-  Для этапа 1 допустим простой fixed-function OpenGL.
+- [x] **1.7. `OpenGLRenderer`: очистка и прямоугольник.**
+  Fixed-function OpenGL: `glOrtho` и `GL_QUADS`.
   `// TODO: упрощение для этапа 1: заменить на шейдеры и батчинг`.
-  Проверка: в окне виден цветной прямоугольник.
+  Проверка: в окне виден синий прямоугольник.
 
-- [ ] **1.8. Цикл событий и закрытие.**
+- [x] **1.8. Цикл событий и закрытие.**
   `Application::run(Window&)` вызывает backend, очищает, рисует, меняет буферы;
-  `CloseEvent` завершает цикл.
-  Проверка: окно закрывается крестиком; CPU не крутится вхолостую без нужды.
+  `SDL_EVENT_QUIT` и закрытие окна завершают цикл.
+  Проверка: окно закрывается крестиком, выход 0.
 
-- [ ] **1.9. Пример `examples/01_window`.**
-  Отдельная цель `ladoga_01_window`, окно с прямоугольником.
+- [x] **1.9. Пример `examples/01_window`.**
+  Отдельная цель `ladoga_01_window`, окно 800×600 с прямоугольником.
   Проверка: запуск из CLion и из терминала даёт одинаковый результат.
 
-- [ ] **1.10. Документация этапа.**
-  Раздел «Сборка SDL3» в `docs/QUICKSTART.md`, заметка в `docs/ARCHITECTURE.md`.
+- [x] **1.10. Документация этапа.**
+  `docs/QUICKSTART.md`, `docs/ARCHITECTURE.md`, `README.md`, эта карта.
   Проверка: чистая папка `build/` собирается по инструкции.
 
-- [ ] **1.11. Коммит этапа 1.**
+- [x] **1.11. Коммит этапа 1.**
   Проверка: `ctest` проходит, окно закрывается, `git status` чистый.
 
 ---

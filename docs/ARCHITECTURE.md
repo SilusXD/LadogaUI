@@ -4,6 +4,17 @@
 контракт — в [API_CONTRACT.md](API_CONTRACT.md). Если внутреннее устройство
 можно упростить, не ломая контракт, — упрощаем.
 
+## 0. Что реализовано на этапе 1
+
+- `Application::run(Window&)` создаёт `SDL3Backend` и `OpenGLRenderer`, крутит
+  цикл событий и вызывает `Window::paint(Renderer&)`.
+- `Window` пока **не** наследует `Widget`: это отдельный класс с заголовком,
+  размером и виртуальным `paint`. Наследование появится на этапе 2.
+- `WindowBackend` уже абстракция: ядро не вызывает SDL напрямую. Но `Application`
+  пока сам выбирает `SDL3Backend` — внедрение бэкенда появится позже.
+- `OpenGLRenderer` рисует fixed-function OpenGL. Это временно (см. TODO в коде).
+- XML, `Widget`, `StackPanel`, `Event` и hit-test ещё не реализованы.
+
 ## 1. Слои
 
 ```text
@@ -29,21 +40,15 @@
 include/ladoga/          публичные заголовки
 ├── ladoga.h             единый заголовок
 ├── application.h
-├── widget.h
 ├── window.h
-├── stack_panel.h
-├── label.h
-├── button.h
-├── text_box.h
-├── check_box.h
-├── slider.h
-├── renderer.h           абстракция рисования (нужна Widget::paint)
-└── core/                геометрия, цвет, события, margin
+├── renderer.h           абстракция рисования (нужна Window::paint)
+└── core/                геометрия, цвет, margin, события (этапы 2–4)
 
 src/
-├── core/                Widget, layout, маршрутизация событий
-├── render/              SDL3Backend, OpenGLRenderer, шейдеры
-├── xml/                 XmlLoader, WidgetFactory, PropertyMap
+├── window.cpp
+├── core/                Widget, layout, маршрутизация событий (этапы 2–4)
+├── render/              WindowBackend, SDL3Backend, OpenGLRenderer
+├── xml/                 XmlLoader, WidgetFactory, PropertyMap (этап 3)
 └── app/                 Application, цикл событий
 
 examples/                по одному примеру на тему/виджет
@@ -55,7 +60,8 @@ third_party/             только если зависимость нельз
 ## 3. Владение
 
 - `Application` владеет бэкендом и рендерером на время `run`.
-- `Window` — корень дерева. Он владеет детьми через
+- На этапе 1 `Window` не владеет детьми: дерева ещё нет. С этапа 2 `Window`
+  станет корнем дерева и будет владеть детьми через
   `std::vector<std::unique_ptr<Widget>>`.
 - `Widget` хранит невладеющий `Widget* parent`.
 - Событийные поля (`clicked` и т. п.) принадлежат виджету.
@@ -68,6 +74,24 @@ third_party/             только если зависимость нельз
 задокументировано в контракте.
 
 ## 4. Жизненный цикл кадра
+
+На этапе 1 цикл короткий:
+
+```text
+poll SDL events (закрытие окна)
+      ↓
+Renderer::set_viewport(drawable_size)
+      ↓
+Renderer::begin_frame(clear_color)
+      ↓
+Window::paint(Renderer&)
+      ↓
+Renderer::end_frame()
+      ↓
+SDL_GL_SwapWindow
+```
+
+С этапа 2–4 сюда добавятся layout, hit-test и маршрутизация событий:
 
 ```text
 poll SDL events
@@ -163,6 +187,7 @@ Button хранит `pressed_inside_`. `clicked` вызывается тольк
 class Renderer {
 public:
     virtual ~Renderer() = default;
+    virtual void set_viewport(Size size) = 0;
     virtual void begin_frame(Color clear_color) = 0;
     virtual void draw_rect(const Rect& rect, Color color) = 0;
     virtual void draw_text(const Rect& rect, std::string_view text, Color color) = 0;
@@ -170,9 +195,11 @@ public:
 };
 ```
 
-- `OpenGLRenderer` реализует интерфейс через шейдеры и батчинг прямоугольников.
+- На этапе 1 `OpenGLRenderer` использует fixed-function OpenGL: `glOrtho`,
+  `glBegin(GL_QUADS)`. Это осознанное упрощение; шейдеры и батчинг — этап 5.
+- `Renderer` скрывает OpenGL от `Window::paint`.
 - Текст на этапе 5: отдельный шаг выбора шрифтового бэкенда (stb_truetype +
-  свободный шрифт или SDL3_ttf). До этого `draw_text` может быть заглушкой.
+  свободный шрифт или SDL3_ttf). До этого `draw_text` — заглушка.
 - `NullRenderer` для тестов layout/логики без окна — полезен на этапах 2–3.
 
 `WindowBackend` скрывает SDL3:
@@ -181,21 +208,21 @@ public:
 class WindowBackend {
 public:
     virtual ~WindowBackend() = default;
-    virtual bool poll_event(Event& event) = 0;
+    virtual bool poll_events() = 0;
     virtual Size drawable_size() const = 0;
-    virtual void swap_buffers() = 0;
+    virtual void present() = 0;
 };
 ```
 
-`SDL3Backend` создаёт окно и контекст OpenGL. Ядро получает только
-`WindowBackend&` и `Renderer&`.
+`SDL3Backend` создаёт окно и контекст OpenGL. `Application` получает его
+напрямую и вызывает `poll_events`, `drawable_size`, `present`.
 
 ## 9. Зависимости
 
 | Зависимость | Этап | Как подключаем | Зачем |
 |---|---|---|---|
-| SDL3 | 1 | CMake FetchContent, закреплённый тег | окно, ввод, контекст GL |
-| OpenGL | 1 | системный + загрузчик функций | рисование |
+| SDL3 3.4.18 | 1 | CMake FetchContent, закреплённый тег | окно, ввод, контекст GL |
+| OpenGL | 1 | системный, `find_package(OpenGL)` | рисование |
 | pugixml | 3 | FetchContent или vendored MIT-код | разбор XML |
 | шрифтовой бэкенд | 5 | отдельное решение | текст и кириллица |
 
@@ -203,8 +230,9 @@ public:
 
 - никаких зависимостей «на будущее»;
 - версии закреплены;
-- на этапе 0 проект собирается без сети и без внешних библиотек;
-- лицензии совместимы с учебным и коммерческим использованием.
+- первая сборка требует сети: SDL3 скачивается и собирается статически;
+- лицензии совместимы с учебным и коммерческим использованием
+  (SDL3 — zlib, OpenGL — системный API).
 
 ## 10. Расширяемость (этап 8)
 
