@@ -24,12 +24,29 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 # libwinpthread-1.dll остаётся динамической — её копируем рядом с exe.
 if(MINGW)
     add_link_options(-static-libgcc -static-libstdc++)
-    get_filename_component(LADOGA_MINGW_BIN_DIR "${CMAKE_CXX_COMPILER}" DIRECTORY)
 
+    # Функция самодостаточна: не зависит от переменных, заданных в этом
+    # каталоге. Поэтому её можно вызывать и из внешнего проекта после
+    # add_subdirectory(LadogaUI).
     function(ladoga_copy_mingw_runtime target)
+        if(NOT TARGET ${target})
+            message(FATAL_ERROR
+                "ladoga_copy_mingw_runtime: цель '${target}' ещё не создана")
+        endif()
+
+        get_filename_component(_ladoga_mingw_bin "${CMAKE_CXX_COMPILER}" DIRECTORY)
+        set(_ladoga_winpthread "${_ladoga_mingw_bin}/libwinpthread-1.dll")
+
+        if(NOT EXISTS "${_ladoga_winpthread}")
+            message(WARNING
+                "LadogaUI: ${_ladoga_winpthread} не найден; "
+                "скопируйте libwinpthread-1.dll рядом с ${target} вручную")
+            return()
+        endif()
+
         add_custom_command(TARGET ${target} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                "${LADOGA_MINGW_BIN_DIR}/libwinpthread-1.dll"
+                "${_ladoga_winpthread}"
                 "$<TARGET_FILE_DIR:${target}>"
             VERBATIM
         )

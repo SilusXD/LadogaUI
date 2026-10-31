@@ -6,6 +6,8 @@
 |---|---|---|
 | `cmake: command not found` | CMake не в `PATH` | Открыть проект в CLion или добавить CMake в `PATH` |
 | `CMAKE_CXX_COMPILER not found` | Нет компилятора в `PATH` | Использовать toolchain CLion или установить GCC/Clang/MSVC |
+| Ninja зависает на дочерних процессах | Особенность среды/песочницы | `cmake -S . -B build -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Debug`; на обычной машине Ninja можно оставить |
+| `ladoga_copy_mingw_runtime` падает в POST_BUILD | Старая версия функции читала переменную из чужого каталога | Обновить LadogaUI: функция сама вычисляет путь от `CMAKE_CXX_COMPILER` |
 | Долго висит `FetchContent` | Первая загрузка SDL3/pugixml | Проверить доступ к GitHub; при необходимости `LADOGA_USE_SYSTEM_SDL3=ON` |
 | CMake не находит OpenGL | Нет dev-пакета | Установить `libgl1-mesa-dev` / `mesa-common-dev` (Linux) |
 | `undefined reference to SDL_...` | Не подключён `SDL3::SDL3` | Собирать через CMake, не вручную |

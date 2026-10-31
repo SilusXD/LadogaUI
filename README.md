@@ -81,6 +81,16 @@ ctest --test-dir build --output-on-failure
 .\build\bin\ladoga_05_hello.exe
 ```
 
+Если Ninja зависает на дочерних процессах (встречалось в среде агента),
+используйте `-G "MinGW Makefiles"`:
+
+```powershell
+cmake -S . -B build -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Debug
+cmake --build build
+```
+
+На обычной машине команды с Ninja не меняются.
+
 Ожидаемо: окно 560×440 с заголовком `LadogaUI - Hello, World`, текст, поле
 ввода, кнопка OK, флажок и слайдер. Введите имя и нажмите OK — приветствие
 изменится. Окно закрывается крестиком, процесс завершается с кодом 0.
