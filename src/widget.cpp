@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <utility>
 
+#include <ladoga/core/event.h>
+
 namespace ladoga {
 
 const std::string& Widget::name() const noexcept { return name_; }
@@ -111,6 +113,40 @@ void Widget::paint(Renderer& renderer) {
         child->paint(renderer);
     }
 }
+
+bool Widget::on_event(const Event&) { return false; }
+
+bool Widget::dispatch_event(const Event& event) {
+    if (!visible_) {
+        return false;
+    }
+    if (on_event(event)) {
+        return true;
+    }
+    // Всплытие: предкам достаётся on_event, но не повторный hit-test.
+    for (Widget* ancestor = parent_; ancestor != nullptr; ancestor = ancestor->parent_) {
+        if (ancestor->on_event(event)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+Widget* Widget::hit_test(Point point) {
+    if (!visible_ || !bounds_.contains(point)) {
+        return nullptr;
+    }
+    for (auto it = children_.rbegin(); it != children_.rend(); ++it) {
+        if (Widget* hit = (*it)->hit_test(point)) {
+            return hit;
+        }
+    }
+    return this;
+}
+
+bool Widget::accepts_focus() const { return false; }
+
+void Widget::set_focus(bool) {}
 
 void Widget::layout_children() {}
 

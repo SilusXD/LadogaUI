@@ -1,10 +1,9 @@
-# Быстрый старт
+# Быстрый старт: первое окно за 30 минут
 
-Статус: **этапы 2–3.** Работают дерево виджетов, `StackPanel` и загрузка окна
-из XML. Текст пока не рисуется: `Label`, `Button`, `TextBox`, `CheckBox` и
-`Slider` выглядят как цветные заглушки. Шрифты — этап 5, клики — этап 4.
+Цель: собрать LadogaUI, запустить форму из XML, изменить текст и подключить
+C++-обработчик кнопки. Без Qt, без ручной установки SDL3.
 
-## 1. Что нужно
+## 0–5 минут. Что нужно
 
 - Windows, Linux или macOS;
 - CMake 3.24+;
@@ -12,22 +11,16 @@
 - OpenGL-драйвер;
 - интернет при первой сборке: CMake скачивает SDL3 3.4.18 и pugixml 1.16.
 
-Если зависимости уже стоят в системе, передайте
-`-DLADOGA_USE_SYSTEM_SDL3=ON` и `-DLADOGA_USE_SYSTEM_PUGIXML=ON`.
+## 5–12 минут. Сборка
 
-## 2. Сборка в CLion
+### CLion
 
 1. Открыть папку `LadogaUI`.
 2. `File → Reload CMake Project`.
-3. Дождаться первой настройки: CMake скачает и соберёт SDL3 и pugixml.
-4. Выбрать цель `ladoga_03_xml` и нажать Run.
+3. Дождаться, пока CMake скачает и соберёт SDL3 и pugixml.
+4. Выбрать цель `ladoga_05_hello` и нажать Run.
 
-Ожидаемо: окно 520×420 с заголовком `LadogaUI - XML`, внутри — цветные
-заглушки пяти виджетов. Окно закрывается крестиком, процесс завершается с кодом 0.
-
-## 3. Сборка в терминале
-
-### Windows: инструменты из CLion
+### Терминал Windows
 
 ```powershell
 $clion = "C:\Programming\Apps\JetBrains\CLion 2026.2.4.1"
@@ -36,47 +29,62 @@ $env:PATH = "$clion\bin\cmake\win\x64\bin;$clion\bin\ninja\win\x64;$clion\bin\mi
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
 cmake --build build
 ctest --test-dir build --output-on-failure
-.\build\bin\ladoga_03_xml.exe
 ```
 
-Все бинарники лежат в `<build>/bin`. Рядом с exe автоматически копируются
-`libwinpthread-1.dll` и `main.xml`; C++ runtime слинкован статически.
-
-### Linux / macOS
+### Терминал Linux / macOS
 
 ```bash
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
 cmake --build build
 ctest --test-dir build --output-on-failure
-./build/bin/ladoga_03_xml
 ```
 
-Если Ninja не установлен, убрать `-G Ninja`: CMake выберет доступный генератор.
-Для сборки SDL3 на Linux могут понадобиться пакеты разработки OpenGL и X11/Wayland.
+## 12–15 минут. Первый запуск
 
-## 4. Минимальный XML
+```powershell
+.\build\bin\ladoga_05_hello.exe
+```
 
-Файл `main.xml`:
+На Linux/macOS:
+
+```bash
+./build/bin/ladoga_05_hello
+```
+
+Ожидаемо: окно 560×440 с заголовком `LadogaUI - Hello, World`, текст
+«Введите имя и нажмите OK», поле ввода, кнопка OK, флажок и слайдер.
+Введите имя, нажмите OK — текст приветствия изменится.
+
+![Форма Hello, World](images/hello.png)
+
+## 15–22 минуты. Меняем XML
+
+Откройте `examples/05_hello/main.xml`:
 
 ```xml
-<Window Name="MainWindow" Title="Hello" Width="400" Height="300">
-    <StackPanel Orientation="Vertical" Margin="16">
-        <Label Name="greeting" Text="Введите имя:" />
+<Window Name="HelloWindow" Title="LadogaUI - Hello, World" Width="560" Height="440">
+    <StackPanel Orientation="Vertical" Margin="24">
+        <Label Name="greeting" Text="Введите имя и нажмите OK" />
         <TextBox Name="nameBox" Text="" />
         <Button Name="okButton" Text="OK" Click="onOk" />
+        <CheckBox Name="agree" Text="Согласен" Checked="true" />
+        <Slider Name="volume" Min="0" Max="100" Value="50" />
     </StackPanel>
 </Window>
 ```
 
-Загрузка и доступ по имени:
+Измените `Text`, `Width`, `Title` и пересоберите — окно изменится. Незнакомые
+теги и атрибуты дают ошибку с номером строки, а не молча игнорируются.
+
+## 22–28 минут. Подключаем C++
+
+В `examples/05_hello/main.cpp` обработчик уже есть:
 
 ```cpp
-#include <ladoga/ladoga.h>
-
-class MainWindow final : public ladoga::Window {
+class HelloWindow final : public ladoga::Window {
 public:
-    MainWindow() {
-        load_from_xml("main.xml");
+    HelloWindow() {
+        load_from_xml(std::filesystem::path(LADOGA_EXAMPLE_DIR) / "main.xml");
         register_action("onOk", [this] { onOk(); });
     }
 
@@ -85,37 +93,21 @@ public:
 
 private:
     void onOk() {
-        greeting().set_text("Привет, " + nameBox().text());
+        const std::string name = nameBox().text();
+        greeting().set_text(name.empty() ? "Привет, мир!" : "Привет, " + name + "!");
     }
 };
-
-int main(int argc, char** argv) {
-    ladoga::Application app(argc, argv);
-    MainWindow window;
-    return app.run(window);
-}
 ```
 
-`load_from_xml("main.xml")` ищет файл относительно рабочего каталога. В готовом
-примере `03_xml` путь передаётся абсолютным, чтобы запуск из CLion и из
-`build/bin` работал одинаково.
+Поменяйте текст приветствия, добавьте ещё один `<Label>` или кнопку. Для
+нового `Name` делается такой же короткий accessor через `find_child<T>`.
 
-## 5. Частые проблемы
+## 28–30 минут. Куда дальше
 
-| Симптом | Причина | Решение |
-|---|---|---|
-| CMake долго «висит» на `FetchContent` | Первая загрузка SDL3/pugixml | Дать сети время; проверить доступ к GitHub |
-| `main.xml:3:5: неизвестный тег <Buton>` | Опечатка в теге | Тег должен совпадать с классом: `Button` |
-| `свойство Text: ...` | `Text` у виджета, которому оно не положено | `Text` есть только у Label/Button/TextBox/CheckBox |
-| `Name 'x' уже используется` | Два виджета с одним `Name` | Имена в одном окне уникальны |
-| Окно не открывается, код 1 | Нет OpenGL-драйвера | Обновить драйвер, посмотреть `stderr` |
-| `0xC0000135` при запуске | Не хватает DLL | Запускать из `<build>/bin`, где лежит `libwinpthread-1.dll` |
+- [Справочник API](API_REFERENCE.md)
+- [Справочник XML](XML_REFERENCE.md)
+- [Примеры](EXAMPLES.md)
+- [Виджеты](widgets/README.md)
+- [Частые проблемы](TROUBLESHOOTING.md)
 
-## 6. Что дальше
-
-1. [Контракт API](API_CONTRACT.md).
-2. [Справочник по XML](XML_REFERENCE.md).
-3. [План](PLAN.md), этап 4 — hit-test, клики и `Button::clicked`.
-
-Цель этапа 4: клик по кнопке действительно вызывает `onOk`, а `clicked`
-вызывается только при нажатии и отпускании внутри кнопки.
+Если что-то не запускается, начните с [TROUBLESHOOTING.md](TROUBLESHOOTING.md).

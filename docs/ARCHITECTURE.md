@@ -4,19 +4,19 @@
 контракт — в [API_CONTRACT.md](API_CONTRACT.md). Если внутреннее устройство
 можно упростить, не ломая контракт, — упрощаем.
 
-## 0. Что реализовано на этапах 2–3
+## 0. Что реализовано на этапах 4–6
 
-- `Widget` — дерево детей, `Name`, `Width`/`Height`/`Auto`, `Margin`, `Visible`,
-  `preferred_size()`, `layout()`, `paint()`.
-- `Window` наследует `Widget` и является корнем дерева.
-- `StackPanel` раскладывает детей вертикально и горизонтально.
-- `Label`, `Button`, `TextBox`, `CheckBox`, `Slider` хранят свойства; вместо
-  текста пока рисуются цветные заглушки (TODO этапа 5).
-- `XmlLoader` + `WidgetFactory` + `PropertyMap` создают дерево из XML.
-- `Window::load_from_xml`, `register_action`, `invoke_action`; `Click` создаёт
-  `Button::clicked`, но событий мыши ещё нет.
-- `OpenGLRenderer` по-прежнему fixed-function; текст — этап 5.
-- `Event`, hit-test и `on_event` — этап 4.
+- `Widget::on_event` + `dispatch_event` + `hit_test`; `Window` хранит фокус
+  TextBox и захват мыши.
+- `Button` вызывает `clicked` только при нажатии и отпускании внутри.
+- `TextBox` принимает UTF-8 ввод и Backspace, `CheckBox` переключается,
+  `Slider` тянется мышью.
+- Текст рисуется через stb_truetype + Roboto в `OpenGLRenderer::draw_text`.
+- `03_xml`, `04_events`, `05_hello` — рабочие примеры с текстом и событиями.
+- `XmlLoader` по-прежнему создаёт дерево, `PropertyMap` применяет свойства.
+- `OpenGLRenderer` использует fixed-function OpenGL и отдельную текстуру на
+  строку; шейдеры/батчинг оставлены на будущее.
+- `GridPanel`, темы, плагины и установка — не реализованы.
 
 ## 1. Слои
 
@@ -52,10 +52,13 @@ include/ladoga/          публичные заголовки
 
 src/
 ├── widget.cpp, stack_panel.cpp, window.cpp, виджеты
-├── core/                layout, маршрутизация событий (этап 4)
-├── render/              WindowBackend, SDL3Backend, OpenGLRenderer
+├── text_metrics.h        грубая оценка ширины текста
+├── core/                layout, события
+├── render/              WindowBackend, SDL3Backend, OpenGLRenderer, Font
 ├── xml/                 XmlLoader, WidgetFactory, PropertyMap
 └── app/                 Application, цикл событий
+
+third_party/             stb_truetype.h и Roboto (лицензии в README)
 
 examples/                по одному примеру на тему/виджет
 tests/                   smoke + поведенческие тесты
@@ -74,54 +77,34 @@ third_party/             только если зависимость нельз
 - После `load_from_xml` дерево принадлежит окну; повторная загрузка удаляет
   старые дочерние виджеты.
 
-Удаление виджета во время обработки его события запрещено на этапе 4: это
-позволяет не строить сложную систему «безопасных» итераторов. Ограничение
-задокументировано в контракте.
-
 ## 4. Жизненный цикл кадра
 
-Сейчас (этапы 2–3) цикл такой:
+Сейчас (этапы 4–6) цикл такой:
 
 ```text
-poll SDL events (закрытие окна)
-      ↓
 window.set_bounds({0, 0, drawable_size})
       ↓
 window.layout()
       ↓
-Renderer::set_viewport(drawable_size)
+WindowBackend::poll_events(events)   // SDL3 → ladoga::Event
       ↓
-Renderer::begin_frame(clear_color)
+window.dispatch_event(event) для каждого
       ↓
-window.paint(Renderer&)
+Renderer::set_viewport / begin_frame
       ↓
-Renderer::end_frame()
+window.paint(Renderer&)              // включая текст
       ↓
-SDL_GL_SwapWindow
+Renderer::end_frame / SDL_GL_SwapWindow
 ```
 
-layout пересчитывается каждый кадр — это просто и достаточно для двух
-вложенных панелей. Флаг `layout_dirty` появится позже, если понадобится.
-
-С этапа 4 сюда добавятся hit-test и маршрутизация событий:
-
-```text
-poll SDL events
-      ↓
-перевод в ladoga::Event
-      ↓
-hit-test + on_event() по дереву
-      ↓
-layout()
-      ↓
-paint(root, Renderer&)
-      ↓
-present()
-```
+layout пересчитывается каждый кадр — это просто и достаточно для учебных
+примеров. Флаг `layout_dirty` появится позже, если понадобится.
 
 - Retained-mode: дерево хранит состояние между кадрами.
 - `paint()` не меняет состояние, кроме кэшей.
 - Один поток. Никаких мьютексов и очередей между потоками.
+- Если окно закрыто, приложение всё равно дорисовывает последний кадр и
+  выходит — так проще не терять события, пришедшие вместе с закрытием.
 
 ## 5. Раскладка
 
@@ -145,24 +128,33 @@ present()
 
 ## 6. События
 
-`WindowBackend` отдаёт платформенные события в нейтральном виде:
+`WindowBackend` переводит SDL3 в нейтральный `ladoga::Event`:
 
 ```cpp
-struct MouseEvent { Point position; MouseButton button; };
-struct KeyEvent   { int key; bool pressed; };
-using Event = std::variant<MouseEvent, KeyEvent, CloseEvent, ResizeEvent>;
+enum class EventType { MouseDown, MouseUp, MouseMove, KeyDown, TextInput };
+struct Event {
+    EventType type;
+    Point position;
+    MouseButton button;
+    int key;
+    std::string text;
+};
 ```
 
-Точная форма уточняется на этапе 4. Маршрутизация:
+Маршрутизация в `Window::dispatch_event`:
 
-1. Hit-test идёт по дереву сверху вниз, ищет самый верхний видимый виджет,
-   содержащий точку.
-2. Событие предлагается виджету.
-3. Если `on_event` вернул `false`, событие поднимается к родителю.
-4. `Window` — последний получатель.
+1. `MouseDown`: hit-test, смена фокуса, запоминание `mouse_capture_`.
+2. `MouseMove`/`MouseUp`: если есть capture — событие идёт ему, иначе hit-test.
+3. `KeyDown`/`TextInput`: событие идёт `focused_widget_` (TextBox).
+4. `Widget::dispatch_event`: сначала `on_event`, затем `on_event` предков.
+   Повторного hit-test при всплытии нет.
 
-Button хранит `pressed_inside_`. `clicked` вызывается только если нажатие и
-отпускание произошли внутри кнопки.
+Button хранит `pressed_`. `clicked` вызывается только если нажатие и
+отпускание произошли внутри кнопки. CheckBox переключается на MouseUp внутри.
+Slider захватывает мышь и обновляет значение по MouseMove.
+
+Удаление виджета во время его события по-прежнему запрещено: это позволяет не
+строить сложную систему «безопасных» итераторов.
 
 ## 7. XML-загрузка
 
@@ -206,10 +198,12 @@ public:
 ```
 
 - Сейчас `OpenGLRenderer` использует fixed-function OpenGL: `glOrtho`,
-  `glBegin(GL_QUADS)`. Это осознанное упрощение; шейдеры и батчинг — этап 5.
-- `Renderer` скрывает OpenGL от `Window::paint`.
-- Текст на этапе 5: отдельный шаг выбора шрифтового бэкенда (stb_truetype +
-  свободный шрифт или SDL3_ttf). До этого `draw_text` — заглушка.
+  `glBegin(GL_QUADS)`. Это осознанное упрощение; шейдеры и батчинг — на будущее.
+- `draw_text`: stb_truetype растеризует строку в RGBA-битмап, рендерер
+  загружает временную текстуру и рисует один quad. Для учебных примеров этого
+  достаточно; атлас и кэш — возможная оптимизация позже.
+- Шрифт: `third_party/Roboto-Regular.ttf` (кириллица, Apache 2.0), путь
+  `LADOGA_FONT_PATH`; есть fallback на `bin/fonts` и системные шрифты.
 - `NullRenderer` для тестов layout/логики без окна пригодится позже.
 
 `WindowBackend` скрывает SDL3:
@@ -217,15 +211,15 @@ public:
 ```cpp
 class WindowBackend {
 public:
-    virtual ~WindowBackend() = default;
-    virtual bool poll_events() = 0;
+    virtual bool poll_events(std::vector<Event>& events) = 0;
     virtual Size drawable_size() const = 0;
+    virtual void set_title(std::string_view title) = 0;
     virtual void present() = 0;
 };
 ```
 
-`SDL3Backend` создаёт окно и контекст OpenGL. `Application` получает его
-напрямую и вызывает `poll_events`, `drawable_size`, `present`.
+`SDL3Backend` создаёт окно и контекст OpenGL, переводит SDL-события в
+`ladoga::Event`, обновляет заголовок и меняет буферы.
 
 ## 9. Зависимости
 
@@ -233,16 +227,19 @@ public:
 |---|---|---|---|
 | SDL3 3.4.18 | 1 | CMake FetchContent, закреплённый тег | окно, ввод, контекст GL |
 | OpenGL | 1 | системный, `find_package(OpenGL)` | рисование |
-| pugixml | 3 | FetchContent или vendored MIT-код | разбор XML |
-| шрифтовой бэкенд | 5 | отдельное решение | текст и кириллица |
+| pugixml 1.16 | 3 | CMake FetchContent | разбор XML |
+| stb_truetype | 5 | header-only, лежит в `third_party` | растеризация текста |
+| Roboto Regular | 5 | файл в `third_party` | шрифт с кириллицей |
 
 Правила:
 
 - никаких зависимостей «на будущее»;
 - версии закреплены;
 - первая сборка требует сети: SDL3 и pugixml скачиваются и собираются статически;
+- шрифт и stb_truetype лежат в репозитории, чтобы не зависеть от системных шрифтов;
 - лицензии совместимы с учебным и коммерческим использованием
-  (SDL3 — zlib, pugixml — MIT, OpenGL — системный API).
+  (SDL3 — zlib, pugixml — MIT, Roboto — Apache 2.0, stb — public domain/MIT,
+  OpenGL — системный API).
 
 ## 10. Расширяемость (этап 8)
 
@@ -262,9 +259,10 @@ public:
 - `tests/smoke_test.cpp` — базовая проверка сборки и типов;
 - `tests/layout_test.cpp` — вертикальная/горизонтальная раскладка, `Auto`,
   `find_child`;
-- `tests/xml_test.cpp` — загрузка XML, свойства, `Click`, ошибка неизвестного тега;
-- этап 4: тесты hit-test и клика без реального окна;
-- этап 5: тесты свойств каждого виджета;
+- `tests/xml_test.cpp` — загрузка XML, свойства, `Click`, ошибки;
+- `tests/events_test.cpp` — hit-test, клик внутри/снаружи, topmost;
+- `tests/font_test.cpp` — загрузка шрифта и непустой битмап с кириллицей;
+- `tests/widgets_test.cpp` — TextBox, CheckBox, Slider;
 - визуальные примеры — отдельно, они не заменяют тесты.
 
 ## 12. Осознанные упрощения

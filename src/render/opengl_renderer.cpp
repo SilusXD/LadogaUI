@@ -8,6 +8,8 @@ namespace ladoga {
 
 namespace {
 
+constexpr int text_pixel_height = 16;
+
 float component(std::uint8_t value) { return static_cast<float>(value) / 255.0F; }
 
 void set_color(Color color) {
@@ -51,8 +53,46 @@ void OpenGLRenderer::draw_rect(const Rect& rect, Color color) {
     glEnd();
 }
 
-void OpenGLRenderer::draw_text(const Rect&, std::string_view, Color) {
-    // TODO: текст появится на этапе 5.
+void OpenGLRenderer::draw_text(const Rect& rect, std::string_view text, Color color) {
+    const Font::Bitmap bitmap = font_.render(text, text_pixel_height, color);
+    if (bitmap.width <= 0 || bitmap.height <= 0) {
+        return;
+    }
+
+    GLuint texture = 0;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, bitmap.width, bitmap.height, 0, GL_RGBA,
+                 GL_UNSIGNED_BYTE, bitmap.pixels.data());
+
+    const int x = rect.x + 4;
+    const int y = rect.y + (rect.height - bitmap.height) / 2;
+    const float x2 = static_cast<float>(x + bitmap.width);
+    const float y2 = static_cast<float>(y + bitmap.height);
+
+    glEnable(GL_TEXTURE_2D);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+
+    glBegin(GL_QUADS);
+    glTexCoord2f(0.0F, 0.0F);
+    glVertex2f(static_cast<float>(x), static_cast<float>(y));
+    glTexCoord2f(1.0F, 0.0F);
+    glVertex2f(x2, static_cast<float>(y));
+    glTexCoord2f(1.0F, 1.0F);
+    glVertex2f(x2, y2);
+    glTexCoord2f(0.0F, 1.0F);
+    glVertex2f(static_cast<float>(x), y2);
+    glEnd();
+
+    glDisable(GL_TEXTURE_2D);
+    glDeleteTextures(1, &texture);
 }
 
 void OpenGLRenderer::end_frame() {}

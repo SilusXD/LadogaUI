@@ -6,6 +6,7 @@
 #include <ladoga/button.h>
 #include <ladoga/check_box.h>
 #include <ladoga/core/color.h>
+#include <ladoga/core/event.h>
 #include <ladoga/core/geometry.h>
 #include <ladoga/core/margin.h>
 #include <ladoga/label.h>

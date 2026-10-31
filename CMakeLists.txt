@@ -51,6 +51,7 @@ add_library(ladoga STATIC
     src/app/application.cpp
     src/render/sdl3_backend.cpp
     src/render/opengl_renderer.cpp
+    src/render/font.cpp
     src/xml/widget_factory.cpp
     src/xml/property_map.cpp
     src/xml/xml_loader.cpp
@@ -64,11 +65,24 @@ target_include_directories(ladoga
         $<INSTALL_INTERFACE:include>
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
+        ${CMAKE_CURRENT_SOURCE_DIR}/third_party
 )
 
 target_compile_features(ladoga PUBLIC cxx_std_20)
-target_compile_definitions(ladoga PRIVATE LADOGA_VERSION_STRING="${PROJECT_VERSION}")
+target_compile_definitions(ladoga PRIVATE
+    LADOGA_VERSION_STRING="${PROJECT_VERSION}"
+    LADOGA_FONT_PATH="${CMAKE_CURRENT_SOURCE_DIR}/third_party/Roboto-Regular.ttf"
+)
 target_link_libraries(ladoga PRIVATE SDL3::SDL3 OpenGL::GL pugixml::pugixml)
+
+# Шрифт рядом с exe: пригодится, если проект запускают не из дерева исходников.
+add_custom_target(ladoga_fonts ALL
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/bin/fonts"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${CMAKE_CURRENT_SOURCE_DIR}/third_party/Roboto-Regular.ttf"
+        "${CMAKE_BINARY_DIR}/bin/fonts/Roboto-Regular.ttf"
+    COMMENT "Копирование шрифта LadogaUI"
+)
 
 if(MSVC)
     target_compile_options(ladoga PRIVATE /W4 /permissive-)

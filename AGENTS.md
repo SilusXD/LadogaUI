@@ -13,14 +13,14 @@
 
 ## Текущее состояние
 
-- Этапы 1–3 закрыты: SDL3 + OpenGL, дерево `Widget`, `StackPanel`, XML-загрузка.
+- Этапы 1–5 закрыты: SDL3 + OpenGL, дерево виджетов, XML, события, текст.
+- Этап 6: документация готова; открыт только человеческий тест «30 минут».
 - Публичные классы: `Application`, `Window`, `Widget`, `StackPanel`, `Label`,
   `Button`, `TextBox`, `CheckBox`, `Slider`, `Renderer`.
-- XML: pugixml 1.16, `WidgetFactory`, `PropertyMap`, `XmlLoader`; `Click`
-  сохраняется в `Button::clicked`.
-- Текст пока не рисуется (этап 5), клики мышью ещё не работают (этап 4).
-- Примеры: `01_window`, `02_layout`, `03_xml`; тесты `smoke`, `layout`, `xml`.
-- Следующий этап по плану — hit-test, события и клик.
+- Шрифт: stb_truetype + Roboto, файлы в `third_party/`.
+- Примеры: `01_window`, `02_layout`, `03_xml`, `04_events`, `05_hello`.
+- Тесты: `smoke`, `layout`, `xml`, `events`, `font`, `widgets` — 6 из 6.
+- Следующий этап по плану — Linux / РЕД ОС (этап 7).
 
 ## Обязательные правила
 
@@ -70,13 +70,18 @@ ctest --test-dir build --output-on-failure
 ## Где что лежит
 
 - Контракт: `docs/API_CONTRACT.md`.
+- API: `docs/API_REFERENCE.md`.
 - XML: `docs/XML_REFERENCE.md`.
+- Примеры: `docs/EXAMPLES.md`.
+- Виджеты: `docs/widgets/`.
+- Ошибки: `docs/TROUBLESHOOTING.md`.
 - Границы модулей: `docs/ARCHITECTURE.md`.
 - Этапы: `docs/ROADMAP.md`.
 - Маленькие шаги: `docs/PLAN.md`.
 
 ## Чего пока нет и что не трогать без отдельного шага
 
-- события, hit-test, `Click` по мыши;
-- текст, шрифты и ввод с клавиатуры;
-- темы, плагины, установка/упаковка.
+- `GridPanel`, темы, плагины, установка/упаковка;
+- сборка и тестирование на Linux / РЕД ОС;
+- выделение текста в TextBox, перенос строк, выравнивание Label;
+- шейдеры и батчинг рендерера.

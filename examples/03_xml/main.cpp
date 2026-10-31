@@ -18,8 +18,8 @@ public:
 private:
     void onOk() {
         const std::string name = nameBox().text();
-        greeting().set_text("Привет, " + name);
-        set_title("LadogaUI - " + name);
+        greeting().set_text(name.empty() ? "Привет, мир!" : "Привет, " + name + "!");
+        set_title(name.empty() ? "LadogaUI - OK" : "LadogaUI - " + name);
     }
 };
 

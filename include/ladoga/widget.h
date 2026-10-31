@@ -11,6 +11,8 @@
 
 namespace ladoga {
 
+struct Event;
+
 /// База дерева виджетов: имя, размеры, отступы, дети и рисование.
 class Widget {
 public:
@@ -62,6 +64,15 @@ public:
     virtual Size preferred_size() const;
     virtual void layout();
     virtual void paint(Renderer& renderer);
+
+    // События: hit-test, поглощение и всплытие к родителю.
+    virtual bool on_event(const Event& event);
+    virtual bool dispatch_event(const Event& event);
+    virtual Widget* hit_test(Point point);
+
+    // Фокус нужен TextBox; остальные виджеты его не принимают.
+    [[nodiscard]] virtual bool accepts_focus() const;
+    virtual void set_focus(bool focused);
 
 protected:
     virtual void layout_children();

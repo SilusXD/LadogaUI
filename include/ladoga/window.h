@@ -25,6 +25,9 @@ public:
     // Создаёт дерево детей из XML. Повторный вызов заменяет дерево.
     void load_from_xml(const std::filesystem::path& path);
 
+    // Событие после hit-test: клик, клавиатура, буксировка мыши.
+    bool dispatch_event(const Event& event);
+
     // Декларативные действия для Click="...".
     void register_action(std::string name, std::function<void()> action);
     bool invoke_action(std::string_view name);
@@ -35,8 +38,12 @@ protected:
     void layout_children() override;
 
 private:
+    void focus_on(Widget* target);
+
     std::string title_;
     std::map<std::string, std::function<void()>, std::less<>> actions_;
+    Widget* mouse_capture_ = nullptr;
+    Widget* focused_widget_ = nullptr;
 };
 
 } // namespace ladoga

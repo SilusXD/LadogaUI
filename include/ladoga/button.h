@@ -15,6 +15,8 @@ public:
 
     Size preferred_size() const override;
 
+    bool on_event(const Event& event) override;
+
     std::function<void()> clicked;
 
 protected:
@@ -22,6 +24,7 @@ protected:
 
 private:
     std::string text_;
+    bool pressed_ = false;
 };
 
 } // namespace ladoga

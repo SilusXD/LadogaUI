@@ -17,6 +17,7 @@ public:
     void set_checked(bool value);
 
     Size preferred_size() const override;
+    bool on_event(const Event& event) override;
 
     std::function<void(bool)> checked_changed;
 

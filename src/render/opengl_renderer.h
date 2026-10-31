@@ -2,10 +2,12 @@
 
 #include <ladoga/renderer.h>
 
+#include "render/font.h"
+
 namespace ladoga {
 
-/// OpenGL-рендерер этапа 1. Рисует прямоугольники через fixed-function OpenGL.
-/// TODO: упрощение для этапа 1: заменить на шейдеры и батчинг на этапе 5.
+/// OpenGL-рендерер: прямоугольники и текст через fixed-function OpenGL.
+/// TODO: позже заменить на шейдеры и батчинг.
 class OpenGLRenderer final : public Renderer {
 public:
     OpenGLRenderer() = default;
@@ -19,6 +21,7 @@ public:
 
 private:
     Size viewport_{1, 1};
+    Font font_;
 };
 
 } // namespace ladoga

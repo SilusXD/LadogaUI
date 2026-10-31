@@ -31,3 +31,23 @@ add_custom_command(TARGET ladoga_03_xml POST_BUILD
 if(COMMAND ladoga_copy_mingw_runtime)
     ladoga_copy_mingw_runtime(ladoga_03_xml)
 endif()
+
+add_executable(ladoga_04_events 04_events/main.cpp)
+target_link_libraries(ladoga_04_events PRIVATE Ladoga::ladoga)
+if(COMMAND ladoga_copy_mingw_runtime)
+    ladoga_copy_mingw_runtime(ladoga_04_events)
+endif()
+
+add_executable(ladoga_05_hello 05_hello/main.cpp)
+target_link_libraries(ladoga_05_hello PRIVATE Ladoga::ladoga)
+target_compile_definitions(ladoga_05_hello PRIVATE
+    LADOGA_EXAMPLE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/05_hello"
+)
+add_custom_command(TARGET ladoga_05_hello POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${CMAKE_CURRENT_SOURCE_DIR}/05_hello/main.xml"
+        "$<TARGET_FILE_DIR:ladoga_05_hello>"
+)
+if(COMMAND ladoga_copy_mingw_runtime)
+    ladoga_copy_mingw_runtime(ladoga_05_hello)
+endif()

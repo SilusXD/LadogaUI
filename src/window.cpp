@@ -4,6 +4,8 @@
 #include <iostream>
 #include <utility>
 
+#include <ladoga/core/event.h>
+
 #include "xml/xml_loader.h"
 
 namespace ladoga {
@@ -33,9 +35,46 @@ void Window::set_size(int width, int height) {
 }
 
 void Window::load_from_xml(const std::filesystem::path& path) {
+    mouse_capture_ = nullptr;
+    focused_widget_ = nullptr;
     clear_children();
     xml::XmlLoader loader;
     loader.load(*this, path);
+}
+
+bool Window::dispatch_event(const Event& event) {
+    if (event.type == EventType::MouseDown) {
+        Widget* target = hit_test(event.position);
+        focus_on(target);
+        mouse_capture_ = target;
+        return target != nullptr && target->dispatch_event(event);
+    }
+    if (event.type == EventType::MouseUp) {
+        Widget* target = mouse_capture_ != nullptr ? mouse_capture_ : hit_test(event.position);
+        mouse_capture_ = nullptr;
+        return target != nullptr && target->dispatch_event(event);
+    }
+    if (event.type == EventType::MouseMove && mouse_capture_ != nullptr) {
+        return mouse_capture_->dispatch_event(event);
+    }
+    if (event.type == EventType::KeyDown || event.type == EventType::TextInput) {
+        return focused_widget_ != nullptr && focused_widget_->dispatch_event(event);
+    }
+    return false;
+}
+
+void Window::focus_on(Widget* target) {
+    Widget* next = target != nullptr && target->accepts_focus() ? target : nullptr;
+    if (next == focused_widget_) {
+        return;
+    }
+    if (focused_widget_ != nullptr) {
+        focused_widget_->set_focus(false);
+    }
+    focused_widget_ = next;
+    if (focused_widget_ != nullptr) {
+        focused_widget_->set_focus(true);
+    }
 }
 
 void Window::register_action(std::string name, std::function<void()> action) {
