@@ -4,6 +4,8 @@
 
 #include <ladoga/ladoga.h>
 
+#include "../gui_main.h"
+
 class EventsWindow final : public ladoga::Window {
 public:
     EventsWindow() : Window("LadogaUI - Events", 560, 420) {
@@ -47,13 +49,13 @@ private:
     ladoga::Label* status_ = nullptr;
 };
 
-int main(int argc, char** argv) {
+LADOGA_EXAMPLE_MAIN {
     try {
-        ladoga::Application app(argc, argv);
+        ladoga::Application app(0, nullptr);
         EventsWindow window;
         return app.run(window);
     } catch (const std::exception& error) {
-        std::cerr << "LadogaUI error: " << error.what() << '\n';
+        ladoga::examples::report_error(error);
         return 1;
     }
 }

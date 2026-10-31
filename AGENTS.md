@@ -18,7 +18,8 @@
 - Публичные классы: `Application`, `Window`, `Widget`, `StackPanel`, `Label`,
   `Button`, `TextBox`, `CheckBox`, `Slider`, `Renderer`.
 - Шрифт: stb_truetype + Roboto, файлы в `third_party/`.
-- Примеры: `01_window`, `02_layout`, `03_xml`, `04_events`, `05_hello`.
+- Примеры: `01_window`, `02_layout`, `03_xml`, `04_events`, `05_hello` —
+  GUI-приложения без консоли; `00_smoke` и тесты — консольные.
 - Тесты: `smoke`, `layout`, `xml`, `events`, `font`, `widgets` — 6 из 6.
 - Следующий этап по плану — Linux / РЕД ОС (этап 7).
 

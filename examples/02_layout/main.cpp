@@ -3,6 +3,8 @@
 
 #include <ladoga/ladoga.h>
 
+#include "../gui_main.h"
+
 class ColoredBox final : public ladoga::Widget {
 public:
     explicit ColoredBox(ladoga::Color color) : color_(color) {}
@@ -45,13 +47,13 @@ public:
     }
 };
 
-int main(int argc, char** argv) {
+LADOGA_EXAMPLE_MAIN {
     try {
-        ladoga::Application app(argc, argv);
+        ladoga::Application app(0, nullptr);
         LayoutWindow window;
         return app.run(window);
     } catch (const std::exception& error) {
-        std::cerr << "LadogaUI error: " << error.what() << '\n';
+        ladoga::examples::report_error(error);
         return 1;
     }
 }
